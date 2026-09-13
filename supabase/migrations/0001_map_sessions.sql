@@ -1,4 +1,4 @@
--- Drive Trail schema. Every table is prefixed with map_.
+-- Map schema. Every table is prefixed with map_.
 -- Run this once in the Supabase SQL editor (or via `supabase db push`).
 
 create extension if not exists "pgcrypto";

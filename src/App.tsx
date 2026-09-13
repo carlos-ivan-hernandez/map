@@ -5,14 +5,17 @@ import { LoginScreen } from "./components/LoginScreen";
 import { MapView, MAX_ZOOM, MIN_ZOOM } from "./components/MapView";
 import { MapControls } from "./components/MapControls";
 import { ControlDock } from "./components/ControlDock";
+import { SettingsModal } from "./components/SettingsModal";
 import { Hud } from "./components/Hud";
 import { useAuth } from "./hooks/useAuth";
 import { useGeolocation } from "./hooks/useGeolocation";
 import { useDriveSession } from "./hooks/useDriveSession";
 import { useWakeLock } from "./hooks/useWakeLock";
 import { usePersistentState } from "./hooks/usePersistentState";
+import { useTheme } from "./hooks/useTheme";
 import { trailDistance } from "./lib/geo";
 import { supabase } from "./lib/supabase";
+import { PANEL } from "./lib/ui";
 
 const DEFAULT_ZOOM = 16;
 
@@ -20,15 +23,17 @@ function clampZoom(zoom: number) {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(zoom)));
 }
 
-function MapScreen() {
-  const [zoom, setZoom] = usePersistentState("drive-trail:zoom", DEFAULT_ZOOM);
+function MapScreen({ email }: { email: string | null }) {
+  const [zoom, setZoom] = usePersistentState("map:zoom", DEFAULT_ZOOM);
   const [follow, setFollow] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const mapRef = useRef<LeafletMap | null>(null);
 
   const { position, status, error: geoError } = useGeolocation(true);
   const drive = useDriveSession(position);
   const wakeLock = useWakeLock();
+  const { theme, setTheme } = useTheme();
 
   const distanceM = useMemo(() => trailDistance(drive.trail), [drive.trail]);
 
@@ -59,15 +64,15 @@ function MapScreen() {
   }, [position, zoom]);
 
   const signOut = useCallback(async () => {
-    if (drive.isRecording) await drive.stop();
+    setSettingsOpen(false);
     await supabase.auth.signOut();
-  }, [drive]);
+  }, []);
 
   // Location problems matter most; a refused wake lock is worth explaining too.
   const banner = geoError ?? drive.error ?? wakeLock.error;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0b0f19]">
+    <div className="relative h-full w-full overflow-hidden bg-background">
       <MapView
         position={position}
         trail={drive.trail}
@@ -98,7 +103,7 @@ function MapScreen() {
 
       {status === "locating" && !position && (
         <div className="pointer-events-none absolute inset-0 z-[999] flex items-center justify-center">
-          <div className="flex items-center gap-3 rounded-xl bg-[#0b0f19]/85 px-4 py-3 text-sm text-white/80 backdrop-blur-md">
+          <div className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-foreground ${PANEL}`}>
             <Spinner size="sm" />
             Finding your location…
           </div>
@@ -106,7 +111,7 @@ function MapScreen() {
       )}
 
       {banner && (
-        <div className="absolute inset-x-3 top-20 z-[1001] rounded-xl border border-red-500/30 bg-red-950/85 px-3 py-2 text-sm text-red-200 backdrop-blur-md">
+        <div className="absolute inset-x-3 top-20 z-[1001] rounded-lg border border-danger/40 bg-danger/15 px-3 py-2 text-sm text-danger backdrop-blur-md">
           {banner}
         </div>
       )}
@@ -118,7 +123,18 @@ function MapScreen() {
         wakeLock={wakeLock}
         onStart={() => void drive.start()}
         onStop={() => void drive.stop()}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
+
+      <SettingsModal
+        isOpen={settingsOpen}
+        theme={theme}
+        email={email}
+        wakeLock={wakeLock}
+        isRecording={drive.isRecording}
+        onThemeChange={setTheme}
         onSignOut={() => void signOut()}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );
@@ -129,11 +145,11 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-[#0b0f19]">
+      <div className="flex h-full w-full items-center justify-center bg-background">
         <Spinner />
       </div>
     );
   }
 
-  return session ? <MapScreen /> : <LoginScreen />;
+  return session ? <MapScreen email={session.user.email ?? null} /> : <LoginScreen />;
 }

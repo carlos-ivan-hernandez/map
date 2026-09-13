@@ -21,10 +21,10 @@ export function LoginScreen() {
   }
 
   return (
-    <div className="flex h-full w-full items-center justify-center bg-[#0b0f19] p-6">
+    <div className="flex h-full w-full items-center justify-center bg-background p-6">
       <Card className="w-full max-w-sm">
         <Card.Header>
-          <Card.Title>Drive Trail</Card.Title>
+          <Card.Title>Map</Card.Title>
           <Card.Description>Sign in to record where you've been.</Card.Description>
         </Card.Header>
 
@@ -39,7 +39,7 @@ export function LoginScreen() {
               fullWidth
             >
               <Label>Email</Label>
-              <Input className="ring-1 ring-white/10" placeholder="you@example.com" />
+              <Input placeholder="you@example.com" />
               <FieldError />
             </TextField>
 
@@ -52,18 +52,18 @@ export function LoginScreen() {
               fullWidth
             >
               <Label>Password</Label>
-              <Input className="ring-1 ring-white/10" placeholder="••••••••" />
+              <Input placeholder="••••••••" />
               <FieldError />
             </TextField>
 
             {!isSupabaseConfigured && (
-              <p className="text-sm text-amber-400">
+              <p className="text-sm text-warning">
                 Supabase isn't configured yet — add <code>VITE_SUPABASE_URL</code> and{" "}
-                <code>VITE_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.
+                <code>VITE_SUPABASE_KEY</code> to <code>.env.local</code>.
               </p>
             )}
 
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
           </Card.Content>
 
           <Card.Footer>

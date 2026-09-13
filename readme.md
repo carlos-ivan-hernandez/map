@@ -1,4 +1,4 @@
-# Drive Trail
+# Map
 
 A single-user PWA that shows where you are on a map and draws a trail of where
 you've been during the current driving session. Built to live on a phone
@@ -12,13 +12,22 @@ mounted in a car.
 - **Zoom** — `+` / `−` buttons (plus pinch and scroll) across levels 3–19. The
   level you leave it on is remembered across reloads.
 - **Keep awake** — a toggle that holds a screen wake lock so the phone doesn't
-  sleep mid-drive.
+  sleep mid-drive. It's on the main toolbar and in settings.
 - **Sessions** — each drive is stored in Supabase along with every GPS fix.
+- **Theme** — dark by default, with a light toggle in the settings modal
+  (gear icon, bottom right). The choice is remembered and applied before first
+  paint, so there's no flash on load.
 
 ## Stack
 
 React 19 · TypeScript · Vite · pnpm · HeroUI v3 (Tailwind v4) · Leaflet ·
 Supabase · vite-plugin-pwa
+
+The HeroUI theme tokens and Geist fonts in
+[src/index.css](src/index.css) are shared with vera, so the two apps look
+like siblings. Map vectors (the trail and position dot) are deliberately fixed
+hex rather than theme tokens — they're drawn on OSM tiles, not on the app
+surface, so they have to stay legible in either theme.
 
 ## Setup
 
@@ -57,7 +66,7 @@ off anything else you don't want.
 cp .env.example .env.local
 ```
 
-Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` from
+Fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_KEY` from
 **Project Settings → API**.
 
 ### 5. Run it

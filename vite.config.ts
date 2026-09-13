@@ -11,11 +11,11 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "apple-touch-icon.png"],
       manifest: {
-        name: "Drive Trail",
-        short_name: "Trail",
+        name: "Map",
+        short_name: "Map",
         description: "Live location and driving trail map",
-        theme_color: "#0b0f19",
-        background_color: "#0b0f19",
+        theme_color: "#121212",
+        background_color: "#121212",
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
@@ -44,4 +44,8 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  server: {
+    host: true,
+    port: 1789,
+  },
 });

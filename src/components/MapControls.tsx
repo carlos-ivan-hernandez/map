@@ -1,4 +1,5 @@
 import { Button } from "@heroui/react";
+import { PANEL } from "../lib/ui";
 import { CrosshairIcon, MinusIcon, PlusIcon } from "./icons";
 import { MAX_ZOOM, MIN_ZOOM } from "./MapView";
 
@@ -11,8 +12,7 @@ interface MapControlsProps {
   onRecenter: () => void;
 }
 
-const controlClass =
-  "size-11 rounded-xl border border-white/10 bg-[#0b0f19]/85 text-white shadow-lg backdrop-blur-md";
+const controlClass = `size-11 rounded-lg ${PANEL}`;
 
 export function MapControls({
   zoom,
@@ -28,14 +28,14 @@ export function MapControls({
         aria-label="Zoom in"
         variant="ghost"
         isIconOnly
-        className={controlClass}
+        className={`${controlClass} text-foreground`}
         isDisabled={zoom >= MAX_ZOOM}
         onPress={onZoomIn}
       >
         <PlusIcon className="size-5" />
       </Button>
 
-      <span className="rounded-lg bg-[#0b0f19]/85 px-2 py-0.5 text-xs tabular-nums text-white/60 shadow backdrop-blur-md">
+      <span className={`rounded px-2 py-0.5 text-xs tabular-nums text-muted ${PANEL}`}>
         z{zoom}
       </span>
 
@@ -43,7 +43,7 @@ export function MapControls({
         aria-label="Zoom out"
         variant="ghost"
         isIconOnly
-        className={controlClass}
+        className={`${controlClass} text-foreground`}
         isDisabled={zoom <= MIN_ZOOM}
         onPress={onZoomOut}
       >
@@ -56,7 +56,7 @@ export function MapControls({
         variant="ghost"
         isIconOnly
         className={`${controlClass} mt-2 ${
-          follow ? "text-sky-400" : "animate-pulse text-white"
+          follow ? "text-accent" : "animate-pulse text-foreground"
         }`}
         isDisabled={!canRecenter}
         onPress={onRecenter}

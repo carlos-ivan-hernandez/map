@@ -12,7 +12,7 @@ const MAX_ACCURACY_M = 100;
 const FLUSH_EVERY_MS = 15_000;
 const FLUSH_AT_COUNT = 25;
 
-const RESUME_KEY = "drive-trail:active-session";
+const RESUME_KEY = "map:active-session";
 
 interface ResumeState {
   sessionId: string;

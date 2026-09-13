@@ -1,5 +1,6 @@
 import { Button, Label, Switch } from "@heroui/react";
-import { RecordIcon, SignOutIcon, StopIcon } from "./icons";
+import { PANEL } from "../lib/ui";
+import { GearIcon, RecordIcon, StopIcon } from "./icons";
 
 interface ControlDockProps {
   isRecording: boolean;
@@ -13,7 +14,7 @@ interface ControlDockProps {
   };
   onStart: () => void;
   onStop: () => void;
-  onSignOut: () => void;
+  onOpenSettings: () => void;
 }
 
 export function ControlDock({
@@ -23,11 +24,11 @@ export function ControlDock({
   wakeLock,
   onStart,
   onStop,
-  onSignOut,
+  onOpenSettings,
 }: ControlDockProps) {
   return (
     <div className="absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/10 bg-[#0b0f19]/85 p-2.5 shadow-2xl backdrop-blur-md">
+      <div className={`flex w-full max-w-md items-center gap-3 rounded-xl p-2.5 ${PANEL}`}>
         <Button
           variant={isRecording ? "danger" : "primary"}
           className="min-w-0 flex-1"
@@ -50,7 +51,7 @@ export function ControlDock({
             </Switch.Control>
             <Label
               className={`whitespace-nowrap text-xs ${
-                wakeLock.active ? "text-sky-400" : "text-white/60"
+                wakeLock.active ? "text-accent" : "text-muted"
               }`}
             >
               {wakeLock.supported ? "Screen" : "No lock"}
@@ -59,13 +60,13 @@ export function ControlDock({
         </Switch>
 
         <Button
-          aria-label="Sign out"
+          aria-label="Settings"
           variant="ghost"
           isIconOnly
-          className="shrink-0 text-white/50"
-          onPress={onSignOut}
+          className="shrink-0 text-muted"
+          onPress={onOpenSettings}
         >
-          <SignOutIcon className="size-5" />
+          <GearIcon className="size-5" />
         </Button>
       </div>
     </div>

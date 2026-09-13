@@ -18,6 +18,16 @@ interface MapViewProps {
 
 const FALLBACK_CENTER: LatLngExpression = [39.8283, -98.5795]; // Geographic centre of the US.
 
+/*
+ * Map vectors are drawn on OSM tiles, not on the app surface, so they stay fixed
+ * hex rather than theme tokens: they must read over pale tiles in either theme,
+ * and Leaflet hands these straight to canvas fillStyle, where oklch() support is
+ * patchy on older iOS. Both sit on the theme's accent hue.
+ */
+const TRAIL_COLOR = "#488fee";
+const TRAIL_CASING = "#121212";
+const POSITION_COLOR = "#296bc2";
+
 /**
  * Keeps the map obeying two rules: the zoom is whatever the user last chose, and
  * while following, their position stays pinned to the centre of the screen.
@@ -122,10 +132,10 @@ export function MapView({
       {line.length > 1 && (
         <>
           {/* Dark casing under the trail keeps it readable over pale map areas. */}
-          <Polyline positions={line} pathOptions={{ color: "#0b0f19", weight: 10, opacity: 0.45 }} />
+          <Polyline positions={line} pathOptions={{ color: TRAIL_CASING, weight: 10, opacity: 0.45 }} />
           <Polyline
             positions={line}
-            pathOptions={{ color: "#38bdf8", weight: 5, opacity: 0.95, lineCap: "round" }}
+            pathOptions={{ color: TRAIL_COLOR, weight: 5, opacity: 0.95, lineCap: "round" }}
           />
         </>
       )}
@@ -138,14 +148,14 @@ export function MapView({
               pane="markerPane"
               center={[position.lat, position.lng]}
               radius={Math.min(60, position.accuracy / 4)}
-              pathOptions={{ color: "#38bdf8", weight: 1, opacity: 0.35, fillOpacity: 0.08 }}
+              pathOptions={{ color: TRAIL_COLOR, weight: 1, opacity: 0.35, fillOpacity: 0.08 }}
             />
           )}
           <CircleMarker
             pane="markerPane"
             center={[position.lat, position.lng]}
             radius={9}
-            pathOptions={{ color: "#ffffff", weight: 3, fillColor: "#2563eb", fillOpacity: 1 }}
+            pathOptions={{ color: "#ffffff", weight: 3, fillColor: POSITION_COLOR, fillOpacity: 1 }}
           />
         </>
       )}
