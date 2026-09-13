@@ -11,11 +11,19 @@ mounted in a car.
   zooming never knocks you off centre.
 - **Zoom** — `+` / `−` buttons (plus pinch and scroll) across levels 3–19. The
   level you leave it on is remembered across reloads.
-- **Keep awake** — a toggle that holds a screen wake lock so the phone doesn't
-  sleep mid-drive. It's on the main toolbar and in settings.
+- **Quiet chrome** — the bottom bar and zoom controls fade out after 10 seconds
+  and come back on any tap, drag or scroll, so the map is mostly unobstructed
+  while you drive.
+- **Stats** — speed, distance and elapsed time across the top. They stay put
+  when the other controls fade; switch them off in settings if you'd rather have
+  the bare map. The choice is remembered.
 - **Sessions** — each drive is stored in Supabase along with every GPS fix.
-- **Theme** — dark by default, with a light toggle in the settings modal
-  (gear icon, bottom right). The choice is remembered and applied before first
+- **Past trips** — the route icon in the bottom bar lists every recorded drive;
+  pick one to draw it on the map in purple, with green start and red end
+  markers, framed to its own bounds.
+- **Settings** — a gear in the bottom bar opens light/dark, the stats readout,
+  the keep-the-screen-awake wake lock, and sign out.
+- **Theme** — dark by default. The choice is remembered and applied before first
   paint, so there's no flash on load.
 
 ## Stack
@@ -91,7 +99,8 @@ viewed tiles cached.
 ## How a drive works
 
 1. Open the app; it starts watching your location straight away and centres on you.
-2. Hit **Start drive**. The blue trail starts drawing behind you.
+2. Hit **Start drive**. The blue trail starts drawing behind you. (If the bar has
+   faded out, tap anywhere to bring it back.)
 3. Fixes are appended when you've moved at least 8 m (or 15 s have passed), which
    keeps GPS jitter out of the trail while you're parked. Anything with accuracy
    worse than 100 m is dropped.
@@ -104,6 +113,13 @@ viewed tiles cached.
 If the browser reloads mid-drive, the session id and trail are restored from
 `localStorage`, so the drive continues instead of being orphaned.
 
+## Reviewing a past trip
+
+The trips list reads `map_sessions` newest first. Opening one pages through its
+points a thousand at a time (Supabase caps a single select) up to 20,000, then
+fits the map to the route. Recording and re-centring are disabled while you're
+reviewing — close the banner to go back to live.
+
 ## Notes
 
 - OSM's public tile servers are fine for one person's personal use. If you ever
@@ -112,7 +128,7 @@ If the browser reloads mid-drive, the session id and trail are restored from
 - Distances are shown in miles and speeds in mph; change `formatDistance` /
   `formatSpeed` in [src/lib/geo.ts](src/lib/geo.ts) for metric.
 - Wake Lock is unsupported on some browsers (notably older iOS Safari). The
-  toggle disables itself and reads "No lock" when that's the case.
+  settings toggle disables itself and says so when that's the case.
 - Recording only runs while the app is in the foreground. Browsers suspend
   geolocation for backgrounded tabs, which is exactly why the keep-awake toggle
   exists.

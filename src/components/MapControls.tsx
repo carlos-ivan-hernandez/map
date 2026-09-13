@@ -4,6 +4,7 @@ import { CrosshairIcon, MinusIcon, PlusIcon } from "./icons";
 import { MAX_ZOOM, MIN_ZOOM } from "./MapView";
 
 interface MapControlsProps {
+  visible: boolean;
   zoom: number;
   follow: boolean;
   canRecenter: boolean;
@@ -15,6 +16,7 @@ interface MapControlsProps {
 const controlClass = `size-11 rounded-lg ${PANEL}`;
 
 export function MapControls({
+  visible,
   zoom,
   follow,
   canRecenter,
@@ -23,7 +25,12 @@ export function MapControls({
   onRecenter,
 }: MapControlsProps) {
   return (
-    <div className="absolute right-3 top-1/2 z-[1000] flex -translate-y-1/2 flex-col items-center gap-2">
+    <div
+      className={`absolute right-3 top-1/2 z-[1000] flex -translate-y-1/2 flex-col items-center gap-2 transition-opacity duration-500 ${
+        visible ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
+      aria-hidden={!visible}
+    >
       <Button
         aria-label="Zoom in"
         variant="ghost"

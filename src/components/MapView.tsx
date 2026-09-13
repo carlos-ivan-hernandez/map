@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Polyline, TileLayer, CircleMarker, useMap, useMapEvent } from "react-leaflet";
-import type { LatLngExpression, Map as LeafletMap } from "leaflet";
+import { latLngBounds, type LatLngExpression, type Map as LeafletMap } from "leaflet";
 import type { TrailPoint } from "../lib/types";
 
 export const MIN_ZOOM = 3;
@@ -9,6 +9,8 @@ export const MAX_ZOOM = 19;
 interface MapViewProps {
   position: TrailPoint | null;
   trail: readonly TrailPoint[];
+  /** A past trip being reviewed; takes the map over while set. */
+  reviewTrail: readonly TrailPoint[];
   zoom: number;
   follow: boolean;
   onZoomChange: (zoom: number) => void;
@@ -27,6 +29,10 @@ const FALLBACK_CENTER: LatLngExpression = [39.8283, -98.5795]; // Geographic cen
 const TRAIL_COLOR = "#488fee";
 const TRAIL_CASING = "#121212";
 const POSITION_COLOR = "#296bc2";
+/* A reviewed trip gets its own hue so it never reads as where you are now. */
+const REVIEW_COLOR = "#9333ea";
+const REVIEW_START = "#16a34a";
+const REVIEW_END = "#dc2626";
 
 /**
  * Keeps the map obeying two rules: the zoom is whatever the user last chose, and
@@ -36,6 +42,7 @@ function MapSync({
   position,
   zoom,
   follow,
+  reviewTrail,
   onZoomChange,
   onUserPan,
   onMapReady,
@@ -44,21 +51,29 @@ function MapSync({
   const hasCenteredRef = useRef(false);
   // Distinguishes our own programmatic moves from the user dragging the map.
   const selfMoveRef = useRef(false);
+  const reviewing = reviewTrail.length > 0;
 
   useEffect(() => {
     onMapReady(map);
   }, [map, onMapReady]);
 
+  // Frame the whole reviewed trip; its zoom is the trip's, not the saved one.
+  useEffect(() => {
+    if (reviewTrail.length === 0) return;
+    const bounds = latLngBounds(reviewTrail.map((p) => [p.lat, p.lng] as [number, number]));
+    map.fitBounds(bounds, { padding: [48, 96], maxZoom: MAX_ZOOM });
+  }, [map, reviewTrail]);
+
   // Apply the remembered zoom level.
   useEffect(() => {
-    if (map.getZoom() === zoom) return;
+    if (reviewing || map.getZoom() === zoom) return;
     selfMoveRef.current = true;
     map.setZoom(zoom, { animate: true });
-  }, [map, zoom]);
+  }, [map, zoom, reviewing]);
 
   // Re-centre on every fix while following, so zooming never drifts off the user.
   useEffect(() => {
-    if (!position) return;
+    if (!position || reviewing) return;
     if (!follow && hasCenteredRef.current) return;
 
     selfMoveRef.current = true;
@@ -70,13 +85,13 @@ function MapSync({
     } else {
       map.setView(target, map.getZoom(), { animate: true, duration: 0.4 });
     }
-  }, [map, position, follow, zoom]);
+  }, [map, position, follow, zoom, reviewing]);
 
   useMapEvent("zoomend", () => {
     const next = map.getZoom();
     if (next !== zoom) onZoomChange(next);
     // A zoom gesture must not knock the user off centre.
-    if (follow && position) {
+    if (follow && position && !reviewing) {
       selfMoveRef.current = true;
       map.setView([position.lat, position.lng], next, { animate: false });
     }
@@ -97,15 +112,23 @@ function MapSync({
 export function MapView({
   position,
   trail,
+  reviewTrail,
   zoom,
   follow,
   onZoomChange,
   onUserPan,
   onMapReady,
 }: MapViewProps) {
+  const reviewing = reviewTrail.length > 0;
+
   const line = useMemo<LatLngExpression[]>(
     () => trail.map((p) => [p.lat, p.lng] as LatLngExpression),
     [trail],
+  );
+
+  const reviewLine = useMemo<LatLngExpression[]>(
+    () => reviewTrail.map((p) => [p.lat, p.lng] as LatLngExpression),
+    [reviewTrail],
   );
 
   const center = position ? ([position.lat, position.lng] as LatLngExpression) : FALLBACK_CENTER;
@@ -129,7 +152,7 @@ export function MapView({
         detectRetina
       />
 
-      {line.length > 1 && (
+      {!reviewing && line.length > 1 && (
         <>
           {/* Dark casing under the trail keeps it readable over pale map areas. */}
           <Polyline positions={line} pathOptions={{ color: TRAIL_CASING, weight: 10, opacity: 0.45 }} />
@@ -140,7 +163,37 @@ export function MapView({
         </>
       )}
 
-      {position && (
+      {reviewing && reviewLine.length > 1 && (
+        <>
+          <Polyline
+            positions={reviewLine}
+            pathOptions={{ color: TRAIL_CASING, weight: 10, opacity: 0.45 }}
+          />
+          <Polyline
+            positions={reviewLine}
+            pathOptions={{ color: REVIEW_COLOR, weight: 5, opacity: 0.95, lineCap: "round" }}
+          />
+        </>
+      )}
+
+      {reviewing && reviewLine.length > 0 && (
+        <>
+          <CircleMarker
+            pane="markerPane"
+            center={reviewLine[0]}
+            radius={7}
+            pathOptions={{ color: "#ffffff", weight: 3, fillColor: REVIEW_START, fillOpacity: 1 }}
+          />
+          <CircleMarker
+            pane="markerPane"
+            center={reviewLine[reviewLine.length - 1]}
+            radius={7}
+            pathOptions={{ color: "#ffffff", weight: 3, fillColor: REVIEW_END, fillOpacity: 1 }}
+          />
+        </>
+      )}
+
+      {position && !reviewing && (
         <>
           {/* markerPane sits above the trail, so a growing polyline never paints over you. */}
           {position.accuracy !== null && position.accuracy > 25 && (
@@ -162,6 +215,7 @@ export function MapView({
 
       <MapSync
         position={position}
+        reviewTrail={reviewTrail}
         zoom={zoom}
         follow={follow}
         onZoomChange={onZoomChange}

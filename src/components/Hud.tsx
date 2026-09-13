@@ -20,14 +20,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function Hud({
-  position,
-  distanceM,
-  startedAt,
-  now,
-  isRecording,
-  pendingCount,
-}: HudProps) {
+export function Hud({ position, distanceM, startedAt, now, isRecording, pendingCount }: HudProps) {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div className={`pointer-events-auto flex items-center gap-1 rounded-xl px-3 py-2 ${PANEL}`}>
@@ -39,10 +32,7 @@ export function Hud({
         />
         <Stat label="Speed" value={formatSpeed(position?.speed ?? null)} />
         <Stat label="Distance" value={formatDistance(distanceM)} />
-        <Stat
-          label="Time"
-          value={startedAt === null ? "--" : formatDuration(now - startedAt)}
-        />
+        <Stat label="Time" value={startedAt === null ? "--" : formatDuration(now - startedAt)} />
         {pendingCount > 0 && (
           <span
             className="ml-1 rounded-full bg-default px-2 py-0.5 text-[10px] text-muted"

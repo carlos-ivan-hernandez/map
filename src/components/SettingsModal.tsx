@@ -5,6 +5,7 @@ import { SignOutIcon } from "./icons";
 interface SettingsModalProps {
   isOpen: boolean;
   theme: Theme;
+  statsShown: boolean;
   email: string | null;
   wakeLock: {
     supported: boolean;
@@ -14,6 +15,7 @@ interface SettingsModalProps {
   };
   isRecording: boolean;
   onThemeChange: (theme: Theme) => void;
+  onStatsShownChange: (shown: boolean) => void;
   onSignOut: () => void;
   onClose: () => void;
 }
@@ -25,10 +27,12 @@ const HEADING = "text-xs font-semibold uppercase tracking-wider text-muted";
 export function SettingsModal({
   isOpen,
   theme,
+  statsShown,
   email,
   wakeLock,
   isRecording,
   onThemeChange,
+  onStatsShownChange,
   onSignOut,
   onClose,
 }: SettingsModalProps) {
@@ -61,6 +65,23 @@ export function SettingsModal({
                     Dark is the default — it's easier on the eyes at night and the map chrome is
                     tuned for it.
                   </p>
+
+                  <Switch
+                    className={ROW}
+                    isSelected={statsShown}
+                    onChange={onStatsShownChange}
+                  >
+                    <Switch.Content className="w-full flex-row-reverse justify-between">
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      <Label className="text-sm text-foreground">Speed, distance and time</Label>
+                    </Switch.Content>
+                  </Switch>
+                  <p className="text-xs text-muted">
+                    The readout across the top of the map. It stays put when the other controls
+                    fade out.
+                  </p>
                 </div>
 
                 <div className={SECTION}>
@@ -80,7 +101,7 @@ export function SettingsModal({
                   </Switch>
                   <p className="text-xs text-muted">
                     {wakeLock.supported
-                      ? "Stops the phone sleeping mid-drive. Also on the main toolbar."
+                      ? "Stops the phone sleeping mid-drive."
                       : "This browser has no Wake Lock API, so the screen will sleep on its own."}
                   </p>
                 </div>

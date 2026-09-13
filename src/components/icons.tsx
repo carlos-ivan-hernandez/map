@@ -61,3 +61,17 @@ export const MoonIcon = (p: SVGProps<SVGSVGElement>) => (
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
   </svg>
 );
+
+export const RouteIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <circle cx="6" cy="19" r="3" />
+    <circle cx="18" cy="5" r="3" />
+    <path d="M9 19h4a4 4 0 0 0 0-8h-2a4 4 0 0 1 0-8h4" />
+  </svg>
+);
+
+export const CloseIcon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...p}>
+    <path d="M18 6 6 18M6 6l12 12" />
+  </svg>
+);
