@@ -1,0 +1,38 @@
+@import "@heroui/react/styles";
+@import "leaflet/dist/leaflet.css";
+
+@source "../index.html";
+@source "./**/*.{ts,tsx}";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+}
+
+body {
+  /* The map is the page; never let the shell bounce or scroll around it. */
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Leaflet paints its own light chrome; keep it out of the way of the dark UI. */
+.leaflet-container {
+  background: #0b0f19;
+  font: inherit;
+}
+
+.leaflet-control-attribution {
+  background: rgb(11 15 25 / 0.7) !important;
+  color: rgb(255 255 255 / 0.55) !important;
+  font-size: 10px !important;
+  padding: 1px 6px !important;
+}
+
+.leaflet-control-attribution a {
+  color: rgb(255 255 255 / 0.75) !important;
+}
