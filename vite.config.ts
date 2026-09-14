@@ -30,12 +30,14 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         runtimeCaching: [
           {
-            // Keep recently viewed map tiles around so a dead zone doesn't blank the map.
-            urlPattern: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/i,
+            // Keep recently viewed map tiles around so a dead zone doesn't blank
+            // the map. Covers every basemap in src/lib/basemaps.ts.
+            urlPattern:
+              /^https:\/\/([a-d]\.tile\.openstreetmap\.org|[a-d]\.basemaps\.cartocdn\.com|[a-c]\.tile\.opentopomap\.org|tile-[ab]\.openstreetmap\.fr|server\.arcgisonline\.com)\/.*/i,
             handler: "CacheFirst",
             options: {
-              cacheName: "osm-tiles",
-              expiration: { maxEntries: 2000, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheName: "map-tiles",
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },

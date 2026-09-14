@@ -1,6 +1,6 @@
 import { Button } from "@heroui/react";
 import { formatDistance, formatDuration } from "../lib/geo";
-import { PANEL } from "../lib/ui";
+import { PANEL, REVIEW_START } from "../lib/ui";
 import { CloseIcon } from "./icons";
 import type { DriveSession } from "../lib/types";
 
@@ -26,7 +26,7 @@ export function ReviewBanner({ trip, pointCount, onExit }: ReviewBannerProps) {
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex justify-center p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div className={`pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-xl px-3 py-2 ${PANEL}`}>
-        <span className="size-2.5 shrink-0 rounded-full bg-[#9333ea]" />
+        <span className="size-2.5 shrink-0 rounded-full" style={{ background: REVIEW_START }} />
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm text-foreground">
             {dateFormat.format(new Date(trip.started_at))}

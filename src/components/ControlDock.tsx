@@ -38,7 +38,7 @@ export function ControlDock({
           onPress={isRecording ? onStop : onStart}
         >
           {isRecording ? <StopIcon className="size-4" /> : <RecordIcon className="size-4" />}
-          <span className="truncate">{isRecording ? "End drive" : "Start drive"}</span>
+          <span className="truncate">{isRecording ? "End trip" : "Start trip"}</span>
         </Button>
 
         <Button

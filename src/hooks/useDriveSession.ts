@@ -176,7 +176,7 @@ export function useDriveSession(position: TrailPoint | null) {
       setStartedAt(new Date(data.started_at).getTime());
       setSessionId(data.id);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not start the drive.");
+      setError(cause instanceof Error ? cause.message : "Could not start the trip.");
     } finally {
       setBusy(false);
     }
@@ -202,15 +202,15 @@ export function useDriveSession(position: TrailPoint | null) {
       if (updateError) throw updateError;
       setError(null);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not close out the drive.");
+      setError(cause instanceof Error ? cause.message : "Could not close out the trip.");
     } finally {
+      // The trip is saved; wipe the trail so the map goes back to blank.
       setSessionId(null);
       setStartedAt(null);
+      setTrail([]);
       setBusy(false);
     }
   }, [flush]);
-
-  const clearTrail = useCallback(() => setTrail([]), []);
 
   return {
     sessionId,
@@ -222,6 +222,5 @@ export function useDriveSession(position: TrailPoint | null) {
     error,
     start,
     stop,
-    clearTrail,
   };
 }

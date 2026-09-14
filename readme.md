@@ -4,9 +4,11 @@ A single-user PWA that shows where you are on a map and draws a trail of where
 you've been during the current driving session. Built to live on a phone
 mounted in a car.
 
-- **Map** — Leaflet with OpenStreetMap raster tiles. No API key, no billing, no
-  quota to sign up for. (Google Maps was the original idea, but its JS API
-  requires a billing-enabled key, so it isn't a free solution.)
+- **Map** — Leaflet with raster tiles. No API key, no billing, no quota to sign
+  up for. (Google Maps was the original idea, but its JS API requires a
+  billing-enabled key, so it isn't a free solution.)
+- **Map styles** — seven basemaps in settings, including **Satellite**. See
+  [Map styles](#map-styles) below for where they come from.
 - **Follow mode** — your position stays pinned to the centre of the screen, and
   zooming never knocks you off centre.
 - **Zoom** — `+` / `−` buttons (plus pinch and scroll) across levels 3–19. The
@@ -17,10 +19,11 @@ mounted in a car.
 - **Stats** — speed, distance and elapsed time across the top. They stay put
   when the other controls fade; switch them off in settings if you'd rather have
   the bare map. The choice is remembered.
-- **Sessions** — each drive is stored in Supabase along with every GPS fix.
-- **Past trips** — the route icon in the bottom bar lists every recorded drive;
-  pick one to draw it on the map in purple, with green start and red end
-  markers, framed to its own bounds.
+- **Sessions** — each trip is stored in Supabase along with every GPS fix.
+- **Past trips** — the route icon in the bottom bar lists every recorded trip;
+  pick one to draw it on the map, framed to its own bounds.
+- **Scrubber** — reviewing a trip swaps the bottom bar for a scrub bar. Drag it
+  and the dot moves through the trip, with the trail drawn in behind it.
 - **Settings** — a gear in the bottom bar opens light/dark, the stats readout,
   the keep-the-screen-awake wake lock, and sign out.
 - **Theme** — dark by default. The choice is remembered and applied before first
@@ -54,7 +57,7 @@ It creates two tables, both prefixed with `map_`:
 
 | Table | What's in it |
 | --- | --- |
-| `map_sessions` | One row per drive: start, end, total distance, point count |
+| `map_sessions` | One row per trip: start, end, total distance, point count |
 | `map_session_points` | One row per GPS fix: lat/lng, accuracy, altitude, speed, heading |
 
 Row-level security is on for both, scoped to `auth.uid()`.
@@ -96,10 +99,10 @@ The simplest route is to deploy `dist/` to any static host that gives you HTTPS
 use **Add to Home Screen**. It installs as a standalone PWA and keeps recently
 viewed tiles cached.
 
-## How a drive works
+## How a trip works
 
 1. Open the app; it starts watching your location straight away and centres on you.
-2. Hit **Start drive**. The blue trail starts drawing behind you. (If the bar has
+2. Hit **Start trip**. The blue trail starts drawing behind you. (If the bar has
    faded out, tap anywhere to bring it back.)
 3. Fixes are appended when you've moved at least 8 m (or 15 s have passed), which
    keeps GPS jitter out of the trail while you're parked. Anything with accuracy
@@ -107,24 +110,54 @@ viewed tiles cached.
 4. Points upload to Supabase in batches — every 15 s, or once 25 have queued.
    The counter in the top bar shows anything still waiting. A failed batch is
    retried on the next flush rather than dropped.
-5. **End drive** flushes the rest and writes the total distance and point count
-   back to `map_sessions`.
+5. **End trip** flushes the rest and writes the total distance and point count
+   back to `map_sessions`, then clears the trail so the map goes back to blank.
+   The trip is still there under past trips.
 
-If the browser reloads mid-drive, the session id and trail are restored from
-`localStorage`, so the drive continues instead of being orphaned.
+If the browser reloads mid-trip, the session id and trail are restored from
+`localStorage`, so the trip continues instead of being orphaned.
+
+## Map styles
+
+OpenStreetMap's own tile servers publish exactly one style (Standard) and **no
+aerial imagery at all** — OSM is map data, not photography. So the other options
+in [src/lib/basemaps.ts](src/lib/basemaps.ts) come from other providers that
+serve raster tiles free and without an API key:
+
+| Style | Source |
+| --- | --- |
+| Standard | OpenStreetMap |
+| Satellite | Esri World Imagery (Esri, Maxar, Earthstar Geographics) |
+| Voyager, Light, Dark | CARTO basemaps |
+| Topographic | OpenTopoMap |
+| Humanitarian | OSM France / HOT |
+
+Each carries the attribution its terms require, and the attribution control
+swaps with the tiles. All are free for personal-scale use; none needs a key.
+Adding another is a matter of appending an entry to that file — though if you add
+a host, extend the tile-cache pattern in
+[vite.config.ts](vite.config.ts) too, or its tiles won't be cached offline.
+
+Topographic only ships to zoom 17, so past that Leaflet upscales its tiles rather
+than showing blank squares.
 
 ## Reviewing a past trip
 
 The trips list reads `map_sessions` newest first. Opening one pages through its
 points a thousand at a time (Supabase caps a single select) up to 20,000, then
-fits the map to the route. Recording and re-centring are disabled while you're
-reviewing — close the banner to go back to live.
+fits the map to the route. The route draws in the same blue as a live trail;
+the green start marker and the banner are what tell them apart.
+
+A trip opens fully drawn, with the scrubber at the end. Drag it back and the
+trail rewinds to that moment, with the elapsed time, recorded speed and clock
+time for that point under the bar. Recording and re-centring are disabled while
+you're reviewing — close the banner to go back to live.
 
 ## Notes
 
-- OSM's public tile servers are fine for one person's personal use. If you ever
-  hammer them, switch the `TileLayer` url in
-  [src/components/MapView.tsx](src/components/MapView.tsx) to another provider.
+- These public tile servers are fine for one person's personal use. If you ever
+  hammer them, switch styles or add a provider in
+  [src/lib/basemaps.ts](src/lib/basemaps.ts).
 - Distances are shown in miles and speeds in mph; change `formatDistance` /
   `formatSpeed` in [src/lib/geo.ts](src/lib/geo.ts) for metric.
 - Wake Lock is unsupported on some browsers (notably older iOS Safari). The

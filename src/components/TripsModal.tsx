@@ -34,7 +34,7 @@ export function TripsModal({
 }: TripsModalProps) {
   const { trips, loading, error, refresh } = useTrips();
 
-  // Re-read on every open so a drive you just ended is in the list.
+  // Re-read on every open so a trip you just ended is in the list.
   useEffect(() => {
     if (isOpen) void refresh();
   }, [isOpen, refresh]);
@@ -59,7 +59,7 @@ export function TripsModal({
 
               {!loading && !error && trips.length === 0 && (
                 <p className="py-8 text-center text-sm text-muted">
-                  No trips yet. Start a drive and it'll show up here.
+                  No trips yet. Start a trip and it'll show up here.
                 </p>
               )}
 

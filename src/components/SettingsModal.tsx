@@ -1,11 +1,13 @@
-import { Button, Label, Modal, Switch } from "@heroui/react";
+import { Button, Label, Modal, Radio, RadioGroup, Switch } from "@heroui/react";
 import type { Theme } from "../hooks/useTheme";
+import { BASEMAPS } from "../lib/basemaps";
 import { SignOutIcon } from "./icons";
 
 interface SettingsModalProps {
   isOpen: boolean;
   theme: Theme;
   statsShown: boolean;
+  basemapId: string;
   email: string | null;
   wakeLock: {
     supported: boolean;
@@ -16,6 +18,7 @@ interface SettingsModalProps {
   isRecording: boolean;
   onThemeChange: (theme: Theme) => void;
   onStatsShownChange: (shown: boolean) => void;
+  onBasemapChange: (id: string) => void;
   onSignOut: () => void;
   onClose: () => void;
 }
@@ -28,11 +31,13 @@ export function SettingsModal({
   isOpen,
   theme,
   statsShown,
+  basemapId,
   email,
   wakeLock,
   isRecording,
   onThemeChange,
   onStatsShownChange,
+  onBasemapChange,
   onSignOut,
   onClose,
 }: SettingsModalProps) {
@@ -85,6 +90,34 @@ export function SettingsModal({
                 </div>
 
                 <div className={SECTION}>
+                  <h3 className={HEADING}>Map style</h3>
+                  <RadioGroup
+                    aria-label="Map style"
+                    value={basemapId}
+                    onChange={onBasemapChange}
+                    className="grid grid-cols-2 gap-x-3 gap-y-2"
+                  >
+                    {BASEMAPS.map((basemap) => (
+                      <Radio key={basemap.id} value={basemap.id}>
+                        {/* Fill the grid cell: a short label like "Dark" would
+                            otherwise leave most of the cell a dead tap target. */}
+                        <Radio.Content className="w-full gap-2 py-1">
+                          <Radio.Control>
+                            <Radio.Indicator />
+                          </Radio.Control>
+                          <Label className="text-sm text-foreground">{basemap.label}</Label>
+                        </Radio.Content>
+                      </Radio>
+                    ))}
+                  </RadioGroup>
+                  <p className="text-xs text-muted">
+                    {BASEMAPS.find((b) => b.id === basemapId)?.description}. OpenStreetMap itself
+                    only publishes the Standard style and no imagery, so Satellite comes from Esri
+                    and the rest from CARTO, OpenTopoMap and HOT — all free and key-free.
+                  </p>
+                </div>
+
+                <div className={SECTION}>
                   <h3 className={HEADING}>Driving</h3>
                   <Switch
                     className={ROW}
@@ -101,7 +134,7 @@ export function SettingsModal({
                   </Switch>
                   <p className="text-xs text-muted">
                     {wakeLock.supported
-                      ? "Stops the phone sleeping mid-drive."
+                      ? "Stops the phone sleeping mid-trip."
                       : "This browser has no Wake Lock API, so the screen will sleep on its own."}
                   </p>
                 </div>
@@ -118,7 +151,7 @@ export function SettingsModal({
                     </Button>
                   </div>
                   {isRecording && (
-                    <p className="text-xs text-muted">End the drive before signing out.</p>
+                    <p className="text-xs text-muted">End the trip before signing out.</p>
                   )}
                 </div>
               </div>

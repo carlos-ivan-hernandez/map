@@ -5,6 +5,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { MapView, MAX_ZOOM, MIN_ZOOM } from "./components/MapView";
 import { MapControls } from "./components/MapControls";
 import { ControlDock } from "./components/ControlDock";
+import { ScrubBar } from "./components/ScrubBar";
 import { SettingsModal } from "./components/SettingsModal";
 import { TripsModal } from "./components/TripsModal";
 import { ReviewBanner } from "./components/ReviewBanner";
@@ -18,6 +19,7 @@ import { useTheme } from "./hooks/useTheme";
 import { useIdleChrome } from "./hooks/useIdleChrome";
 import { useTrips } from "./hooks/useTrips";
 import { trailDistance } from "./lib/geo";
+import { DEFAULT_BASEMAP } from "./lib/basemaps";
 import { supabase } from "./lib/supabase";
 import { PANEL } from "./lib/ui";
 import type { DriveSession, TrailPoint } from "./lib/types";
@@ -36,11 +38,13 @@ interface ReviewState {
 function MapScreen({ email }: { email: string | null }) {
   const [zoom, setZoom] = usePersistentState("map:zoom", DEFAULT_ZOOM);
   const [statsShown, setStatsShown] = usePersistentState("map:stats", true);
+  const [basemapId, setBasemapId] = usePersistentState("map:basemap", DEFAULT_BASEMAP);
   const [follow, setFollow] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tripsOpen, setTripsOpen] = useState(false);
   const [review, setReview] = useState<ReviewState | null>(null);
   const [loadingTripId, setLoadingTripId] = useState<string | null>(null);
+  const [reviewIndex, setReviewIndex] = useState(0);
   const [tripError, setTripError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const mapRef = useRef<LeafletMap | null>(null);
@@ -95,6 +99,7 @@ function MapScreen({ email }: { email: string | null }) {
           return;
         }
         setReview({ trip, points });
+        setReviewIndex(points.length - 1);
         setFollow(false);
         setTripsOpen(false);
       } catch (cause) {
@@ -126,6 +131,8 @@ function MapScreen({ email }: { email: string | null }) {
         position={position}
         trail={drive.trail}
         reviewTrail={review?.points ?? []}
+        reviewIndex={reviewIndex}
+        basemapId={basemapId}
         zoom={zoom}
         follow={follow}
         onZoomChange={handleZoomChange}
@@ -163,16 +170,24 @@ function MapScreen({ email }: { email: string | null }) {
         onRecenter={recenter}
       />
 
-      <ControlDock
-        visible={chrome.visible}
-        isRecording={drive.isRecording}
-        busy={drive.busy}
-        canRecord={position !== null && !reviewing}
-        onStart={() => void drive.start()}
-        onStop={() => void drive.stop()}
-        onOpenTrips={() => setTripsOpen(true)}
-        onOpenSettings={() => setSettingsOpen(true)}
-      />
+      {reviewing ? (
+        <ScrubBar
+          points={review.points}
+          index={reviewIndex}
+          onIndexChange={setReviewIndex}
+        />
+      ) : (
+        <ControlDock
+          visible={chrome.visible}
+          isRecording={drive.isRecording}
+          busy={drive.busy}
+          canRecord={position !== null}
+          onStart={() => void drive.start()}
+          onStop={() => void drive.stop()}
+          onOpenTrips={() => setTripsOpen(true)}
+          onOpenSettings={() => setSettingsOpen(true)}
+        />
+      )}
 
       {status === "locating" && !position && !reviewing && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -201,11 +216,13 @@ function MapScreen({ email }: { email: string | null }) {
         isOpen={settingsOpen}
         theme={theme}
         statsShown={statsShown}
+        basemapId={basemapId}
         email={email}
         wakeLock={wakeLock}
         isRecording={drive.isRecording}
         onThemeChange={setTheme}
         onStatsShownChange={setStatsShown}
+        onBasemapChange={setBasemapId}
         onSignOut={() => void signOut()}
         onClose={() => setSettingsOpen(false)}
       />

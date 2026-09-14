@@ -2,6 +2,14 @@ import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Polyline, TileLayer, CircleMarker, useMap, useMapEvent } from "react-leaflet";
 import { latLngBounds, type LatLngExpression, type Map as LeafletMap } from "leaflet";
 import type { TrailPoint } from "../lib/types";
+import { findBasemap } from "../lib/basemaps";
+import {
+  POSITION_COLOR,
+  REVIEW_END,
+  REVIEW_START,
+  TRAIL_CASING,
+  TRAIL_COLOR,
+} from "../lib/ui";
 
 export const MIN_ZOOM = 3;
 export const MAX_ZOOM = 19;
@@ -11,6 +19,9 @@ interface MapViewProps {
   trail: readonly TrailPoint[];
   /** A past trip being reviewed; takes the map over while set. */
   reviewTrail: readonly TrailPoint[];
+  /** How far through `reviewTrail` the scrubber sits. */
+  reviewIndex: number;
+  basemapId: string;
   zoom: number;
   follow: boolean;
   onZoomChange: (zoom: number) => void;
@@ -19,20 +30,6 @@ interface MapViewProps {
 }
 
 const FALLBACK_CENTER: LatLngExpression = [39.8283, -98.5795]; // Geographic centre of the US.
-
-/*
- * Map vectors are drawn on OSM tiles, not on the app surface, so they stay fixed
- * hex rather than theme tokens: they must read over pale tiles in either theme,
- * and Leaflet hands these straight to canvas fillStyle, where oklch() support is
- * patchy on older iOS. Both sit on the theme's accent hue.
- */
-const TRAIL_COLOR = "#488fee";
-const TRAIL_CASING = "#121212";
-const POSITION_COLOR = "#296bc2";
-/* A reviewed trip gets its own hue so it never reads as where you are now. */
-const REVIEW_COLOR = "#9333ea";
-const REVIEW_START = "#16a34a";
-const REVIEW_END = "#dc2626";
 
 /**
  * Keeps the map obeying two rules: the zoom is whatever the user last chose, and
@@ -46,7 +43,7 @@ function MapSync({
   onZoomChange,
   onUserPan,
   onMapReady,
-}: Omit<MapViewProps, "trail">) {
+}: Omit<MapViewProps, "trail" | "reviewIndex" | "basemapId">) {
   const map = useMap();
   const hasCenteredRef = useRef(false);
   // Distinguishes our own programmatic moves from the user dragging the map.
@@ -113,6 +110,8 @@ export function MapView({
   position,
   trail,
   reviewTrail,
+  reviewIndex,
+  basemapId,
   zoom,
   follow,
   onZoomChange,
@@ -126,10 +125,16 @@ export function MapView({
     [trail],
   );
 
+  // Only the part of the trip the scrubber has reached is drawn.
   const reviewLine = useMemo<LatLngExpression[]>(
-    () => reviewTrail.map((p) => [p.lat, p.lng] as LatLngExpression),
-    [reviewTrail],
+    () =>
+      reviewTrail
+        .slice(0, reviewIndex + 1)
+        .map((p) => [p.lat, p.lng] as LatLngExpression),
+    [reviewTrail, reviewIndex],
   );
+
+  const basemap = findBasemap(basemapId);
 
   const center = position ? ([position.lat, position.lng] as LatLngExpression) : FALLBACK_CENTER;
 
@@ -146,9 +151,13 @@ export function MapView({
       preferCanvas
     >
       <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        // Remount on change so Leaflet swaps the attribution with the tiles.
+        key={basemap.id}
+        url={basemap.url}
+        attribution={basemap.attribution}
+        subdomains={basemap.subdomains ?? "abc"}
         maxZoom={MAX_ZOOM}
+        maxNativeZoom={basemap.maxNativeZoom}
         detectRetina
       />
 
@@ -171,7 +180,7 @@ export function MapView({
           />
           <Polyline
             positions={reviewLine}
-            pathOptions={{ color: REVIEW_COLOR, weight: 5, opacity: 0.95, lineCap: "round" }}
+            pathOptions={{ color: TRAIL_COLOR, weight: 5, opacity: 0.95, lineCap: "round" }}
           />
         </>
       )}
@@ -184,11 +193,17 @@ export function MapView({
             radius={7}
             pathOptions={{ color: "#ffffff", weight: 3, fillColor: REVIEW_START, fillOpacity: 1 }}
           />
+          {/* The scrubber's head: where you were at this point in the trip. */}
           <CircleMarker
             pane="markerPane"
             center={reviewLine[reviewLine.length - 1]}
-            radius={7}
-            pathOptions={{ color: "#ffffff", weight: 3, fillColor: REVIEW_END, fillOpacity: 1 }}
+            radius={9}
+            pathOptions={{
+              color: "#ffffff",
+              weight: 3,
+              fillColor: reviewIndex >= reviewTrail.length - 1 ? REVIEW_END : POSITION_COLOR,
+              fillOpacity: 1,
+            }}
           />
         </>
       )}
